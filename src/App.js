@@ -24,12 +24,12 @@ class BooksApp extends Component {
 
   handleChangeShelf  = (bookID, event) => { 
    
-    let book = this.state.books.filter( b => b.id === bookID )
+    let book = this.state.books.find( b => b.id === bookID )
     const shelf = event.target.value
 
     BooksAPI.update(book, shelf).then(() => {
 
-      book[0].shelf = shelf
+      book.shelf = shelf
       this.setState({
         books: this.state.books.filter( b => b.id !== bookID ).concat(book)
       })
