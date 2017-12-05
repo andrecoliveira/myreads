@@ -17,16 +17,44 @@ class SearchPage extends Component {
 	}
 
 	searchBook = (query) => {
-		BooksAPI.search(query, 20).then( response => {
-			if (response.error) {
-				this.setState({ books: [] })
-			} else {
-				this.setState({ books: response })
-			}
-		})
+
+		if(query){
+
+			BooksAPI.search(query.trim()).then( response => {
+				console.log(response)
+			})
+
+		} else {
+			this.setState({ books: [] })
+		}
+
+
+		// BooksAPI.search(query, 20).then( response => {
+		// 	if (response) {				
+		// 		this.setState({ books: response })
+		// 	} else {
+		// 		this.setState({ books: [] })
+		// 	}
+		// })
 	}
 
+	handleChangeShelf  = (bookID, event) => { 
+   
+	    let book = this.state.books.find( b => b.id === bookID )
+	    const shelf = event.target.value
+
+	    book.shelf = shelf
+
+	    BooksAPI.update(book, shelf).then(() => {	      
+	      this.setState({
+	        books: this.state.books.filter( b => b.id !== bookID )
+	      })
+	    })
+
+  	}
+
 	render(){
+
 		return (
 
 			<div className="search-books">
@@ -57,7 +85,7 @@ class SearchPage extends Component {
 					      <div className="book-top">
 					        <div className="book-cover" style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.smallThumbnail})` }}></div>
 					        <div className="book-shelf-changer">
-					          <select value={book.shelf} onChange={event => this.props.onChangeShelf(book.id, event)}>
+					          <select value={book.shelf} onChange={event => this.handleChangeShelf(book.id, event)}>
 					            <option value="none" disabled>Move to...</option>
 					            <option value="currentlyReading">Currently Reading</option>
 					            <option value="wantToRead">Want to Read</option>
@@ -67,11 +95,10 @@ class SearchPage extends Component {
 					        </div>
 					      </div>
 					      <div className="book-title">{book.title}</div>
-					      {book.authors.map(author =>
-				            <div key={author} className="book-authors">
-				              {author}
-				            </div>
-				          )}
+					      {book.authors &&
+		                  <div className="book-authors">
+		                    {book.authors[0]}
+		                  </div>}
 					    </div>
 					  </li>
 					)}
