@@ -1,59 +1,56 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
+import escapeRegExp from 'escape-string-regexp'
 import * as BooksAPI from './utils/BooksAPI'
-
 
 class SearchPage extends Component {
 
 	state = {
 		query: '',
-		books: []
-
+		books: [],
+     	searchResponse: 'empty'
 	}
 
 	updateQuery = (query) => {
-		this.setState({ query })
-		this.searchBook(query)
-	}
-
-	searchBook = (query) => {
-
-		if(query){
-
-			BooksAPI.search(query.trim()).then( response => {
-				console.log(response)
-			})
-
-		} else {
+		if(!query) {
 			this.setState({ books: [] })
+			console.log('vazio')
+			console.log(this.state.books)  
+		} else {
+			this.setState({ query })
+			this.search(query)
 		}
-
-
-		// BooksAPI.search(query, 20).then( response => {
-		// 	if (response) {				
-		// 		this.setState({ books: response })
-		// 	} else {
-		// 		this.setState({ books: [] })
-		// 	}
-		// })
 	}
 
-	handleChangeShelf  = (bookID, event) => { 
-   
-	    let book = this.state.books.find( b => b.id === bookID )
-	    const shelf = event.target.value
+	search = (query) => {
 
-	    book.shelf = shelf
+		//const myListBooks = this.props.booksOnShelf
+		BooksAPI.search(query, 20).then(books=>{
+			//Exibir somente os livros que não estão na minha estante
+			//const searchFiltered = books.filter(book => myListBooks.map(c => c.title).indexOf(book.title) === -1)
+			books.length > 0 ? this.setState({ books }) : this.setState({ books: [] })	      	
+		})
+  	}
 
-	    BooksAPI.update(book, shelf).then(() => {	      
-	      this.setState({
-	        books: this.state.books.filter( b => b.id !== bookID )
-	      })
-	    })
+	handleChangeShelf  = (bookID, shelf) => {
+      let book = this.state.books.find( b => b.id === bookID )
 
+      //Retirar o livro escolhido da sessão de filtrados na busca
+      this.setState({ books: this.state.books.filter( b => b.id !== bookID ) })
+
+      this.props.changeShelf(book, bookID, shelf)
   	}
 
 	render(){
+
+		let showingBooks
+
+		if (this.state.query) {
+			const match = new RegExp(escapeRegExp(this.state.query), 'i')
+			showingBooks = this.state.books.filter(book => match.test(book.title))
+		} else {
+			showingBooks = this.state.books
+		}
 
 		return (
 
@@ -77,15 +74,30 @@ class SearchPage extends Component {
 	              </div>
 	            </div>
 	            <div className="search-books-results">
-	              <ol className="books-grid">
-	              	
-	              	{this.state.books.map(book =>
+
+	              {this.state.searchResponse === 'not-found'  && (
+		            <div className="msg-alert">
+		            	<span>Please try again!</span>
+		            </div>
+		          )}
+
+		          {this.state.searchResponse === 'found' && (
+		            <div className="msg-confirm">
+		          		<span>{this.state.books.length} books found</span>
+		            </div>
+		          )}
+
+		          {this.state.query}
+
+	              <ol className="books-grid">	              	
+
+	              	{showingBooks.map(book =>
 					  <li key={book.id}>
 					    <div className="book">
 					      <div className="book-top">
 					        <div className="book-cover" style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.smallThumbnail})` }}></div>
 					        <div className="book-shelf-changer">
-					          <select value={book.shelf} onChange={event => this.handleChangeShelf(book.id, event)}>
+					          <select value={book.shelf} onChange={event => this.handleChangeShelf(book.id, event.target.value)}>
 					            <option value="none" disabled>Move to...</option>
 					            <option value="currentlyReading">Currently Reading</option>
 					            <option value="wantToRead">Want to Read</option>

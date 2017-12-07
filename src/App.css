@@ -175,3 +175,23 @@ body, .app {
   text-align: center;
   font-size: 0.8em;
 }
+
+/* messages */
+
+.msg-confirm {
+  background-color: #dff0ff;
+  color: #2185d0;
+  padding: 10px 0;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #2185d0 inset, 0 0 0 0 transparent;
+  text-align: center;
+}
+
+.msg-alert {
+  background-color: #fff8db;
+  color: #b58105;
+  padding: 10px 0;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #b58105 inset, 0 0 0 0 transparent;
+  text-align: center;
+}
