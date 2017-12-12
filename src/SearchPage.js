@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { Debounce } from 'react-throttle';
 import { Link } from 'react-router-dom'
 import escapeRegExp from 'escape-string-regexp'
 import * as BooksAPI from './utils/BooksAPI'
@@ -8,29 +9,29 @@ class SearchPage extends Component {
 	state = {
 		query: '',
 		books: [],
-     	searchResponse: 'empty'
+		searchResponse: 'empty'
 	}
 
 	updateQuery = (query) => {
-		if(!query) {
-			this.setState({ books: [] })
-			console.log('vazio')
-			console.log(this.state.books)  
+		this.setState({ query });
+		if (query.length > 0) {
+
+			const myListBooks = this.props.booksOnShelf
+
+			BooksAPI.search(query, 20).then(searchBooks => {
+
+				let bookWithoutShelf = searchBooks.filter( a => false === myListBooks.some( b => a.id === b.id ) )
+				bookWithoutShelf.forEach( book => book.shelf = 'none')
+
+    			this.setState({ books: bookWithoutShelf })
+
+			}).catch((error) => {
+				this.setState({ books: [] });
+			});
 		} else {
-			this.setState({ query })
-			this.search(query)
+			this.setState({ books: [] });
 		}
 	}
-
-	search = (query) => {
-
-		//const myListBooks = this.props.booksOnShelf
-		BooksAPI.search(query, 20).then(books=>{
-			//Exibir somente os livros que não estão na minha estante
-			//const searchFiltered = books.filter(book => myListBooks.map(c => c.title).indexOf(book.title) === -1)
-			books.length > 0 ? this.setState({ books }) : this.setState({ books: [] })	      	
-		})
-  	}
 
 	handleChangeShelf  = (bookID, shelf) => {
       let book = this.state.books.find( b => b.id === bookID )
@@ -65,12 +66,13 @@ class SearchPage extends Component {
 
 	                  However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
 	                  you don't find a specific author or title. Every search is limited by search terms.
-	                */}
-	                <input type="text" 
-	                	placeholder="Search by title or author" 
-	                	value={this.state.query} 
-	                	onChange={event => this.updateQuery(event.target.value)} />
-
+					*/}
+					<Debounce time="400" handler="onChange">
+						<input type="text" 
+							placeholder="Search by title or author" 
+							onChange={event => this.updateQuery(event.target.value)} 
+						/>
+					</Debounce>
 	              </div>
 	            </div>
 	            <div className="search-books-results">
@@ -86,8 +88,6 @@ class SearchPage extends Component {
 		          		<span>{this.state.books.length} books found</span>
 		            </div>
 		          )}
-
-		          {this.state.query}
 
 	              <ol className="books-grid">	              	
 
