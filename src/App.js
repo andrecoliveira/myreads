@@ -22,7 +22,8 @@ class BooksApp extends Component {
     })
   }
 
-  handleChangeShelf  = (bookID, shelf) => {  
+  handleChangeShelf  = (bookID, shelf) => {
+      console.log(bookID, shelf)
       let book = this.state.books.find( b => b.id === bookID )
       this.bookUpdate(book, bookID, shelf)    
   }  
