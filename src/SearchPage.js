@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Debounce } from 'react-throttle';
+import BookShelf from './BookShelf'
 import { Link } from 'react-router-dom'
 import escapeRegExp from 'escape-string-regexp'
 import * as BooksAPI from './utils/BooksAPI'
@@ -9,37 +9,43 @@ class SearchPage extends Component {
 	state = {
 		query: '',
 		books: [],
-		searchResponse: 'empty'
+		bookSelected: '',
+     	searchResponse: 'empty'
 	}
 
 	updateQuery = (query) => {
-		this.setState({ query });
-		if (query.length > 0) {
+		this.setState({ query })
 
-			const myListBooks = this.props.booksOnShelf
-
-			BooksAPI.search(query, 20).then(searchBooks => {
-
-				let bookWithoutShelf = searchBooks.filter( a => false === myListBooks.some( b => a.id === b.id ) )
-				bookWithoutShelf.forEach( book => book.shelf = 'none')
-
-    			this.setState({ books: bookWithoutShelf })
-
-			}).catch((error) => {
-				this.setState({ books: [] });
-			});
+		if(query) {			
+			BooksAPI.search(query, 20).then(books=>{
+				if(books.length > 0){
+					books.map( book => this.updateBookShelf(book) )
+					this.setState({ books })
+				} else {
+					this.setState({ books: [], searchResponse: 'not-found' })
+				}
+			})
 		} else {
-			this.setState({ books: [] });
+			this.setState({ books: [], searchResponse: 'empty' })
 		}
 	}
 
+	updateBookShelf = (book) => {
+		const myListBooks = this.props.booksOnShelf
+		const bookFound = myListBooks.find( myBook => myBook.id === book.id)
+		if(bookFound) {
+			book.shelf = bookFound.shelf
+		} else {
+			book.shelf = 'none'
+		}
+		return book
+	}
+
 	handleChangeShelf  = (bookID, shelf) => {
-      let book = this.state.books.find( b => b.id === bookID )
+		let book = this.state.books.find( b => b.id === bookID )
 
-      //Retirar o livro escolhido da sessão de filtrados na busca
-      this.setState({ books: this.state.books.filter( b => b.id !== bookID ) })
-
-      this.props.changeShelf(book, bookID, shelf)
+		this.setState({ bookSelected: book.title })
+		this.props.changeShelf(book, bookID, shelf)
   	}
 
 	render(){
@@ -51,7 +57,7 @@ class SearchPage extends Component {
 			showingBooks = this.state.books.filter(book => match.test(book.title))
 		} else {
 			showingBooks = this.state.books
-		}
+		}		
 
 		return (
 
@@ -66,56 +72,29 @@ class SearchPage extends Component {
 
 	                  However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
 	                  you don't find a specific author or title. Every search is limited by search terms.
-					*/}
-					<Debounce time="400" handler="onChange">
-						<input type="text" 
-							placeholder="Search by title or author" 
-							onChange={event => this.updateQuery(event.target.value)} 
-						/>
-					</Debounce>
+	                */}
+                	<input type="text" 
+	                	placeholder="Search by title or author" 
+	                	value={this.state.query} 
+	                	onChange={event => this.updateQuery(event.target.value)} />
 	              </div>
 	            </div>
 	            <div className="search-books-results">
 
-	              {this.state.searchResponse === 'not-found'  && (
+	              {this.state.searchResponse === 'not-found' && (
 		            <div className="msg-alert">
 		            	<span>Please try again!</span>
 		            </div>
 		          )}
 
-		          {this.state.searchResponse === 'found' && (
+		          {this.state.bookSelected !== '' && (
 		            <div className="msg-confirm">
-		          		<span>{this.state.books.length} books found</span>
+		          		<span>The <strong>{this.state.bookSelected}</strong> book was sent to your shelf</span>
 		            </div>
 		          )}
 
-	              <ol className="books-grid">	              	
+		          <BookShelf key="bookFound" books={showingBooks} onChangeShelf={this.handleChangeShelf} />
 
-	              	{showingBooks.map(book =>
-					  <li key={book.id}>
-					    <div className="book">
-					      <div className="book-top">
-					        <div className="book-cover" style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.smallThumbnail})` }}></div>
-					        <div className="book-shelf-changer">
-					          <select value={book.shelf} onChange={event => this.handleChangeShelf(book.id, event.target.value)}>
-					            <option value="none" disabled>Move to...</option>
-					            <option value="currentlyReading">Currently Reading</option>
-					            <option value="wantToRead">Want to Read</option>
-					            <option value="read">Read</option>
-					            <option value="none">None</option>
-					          </select>
-					        </div>
-					      </div>
-					      <div className="book-title">{book.title}</div>
-					      {book.authors &&
-		                  <div className="book-authors">
-		                    {book.authors[0]}
-		                  </div>}
-					    </div>
-					  </li>
-					)}
-
-	              </ol>
 	            </div>
           	</div>
 

@@ -47,7 +47,7 @@ class BooksApp extends Component {
             changeShelf={this.handleChangeShelf} />
         )} />
 
-        <Route path="/create" render={() => (
+        <Route path="/search" render={() => (
           <SearchPage changeShelf={this.bookUpdate} booksOnShelf={this.state.books} />
         )} />
 
