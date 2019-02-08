@@ -1,7 +1,5 @@
 ## MyReads by André Oliveira
 
-This project was made for Udacity's React nano Degree program
-
 - To setup and run just clone or download the project
 - run `npm install`
 - run `npm start`
